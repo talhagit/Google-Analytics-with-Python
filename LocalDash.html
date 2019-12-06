@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Hello Analytics Reporting API</title>
+  <meta name="google-signin-client_id" content="<Enter your C-ID here>">
+  <meta name="google-signin-scope" content="https://www.googleapis.com/auth/analytics.readonly">
+</head>
+<body>
+
+
+
+<form action="javascript:queryReports();" style="color:blue;text-align: center;font-size:20px">
+  Enter path: <input type="text" value="/ga/page2.html?cqid=124" name="Path" size="100"><br><br>
+  <input type="submit" value="Show" style="height:50px; width:100px" >
+</form>
+
+
+
+<div class="HT" id="HT" style="text-decoration: underline;"><h1>Google Analytics Reporting</h1></div>
+<div class="header" id="myHeader" ></div>
+
+
+
+ <p class="g-signin2" data-onsuccess=""></p>
+
+<!-- The API response will be printed here. -->
+
+
+<script>
+    // Replace with your view ID.
+  var VIEW_ID = '<Enter your V-ID here>';
+ <!-- var PageURL="'"+document.getElementsByName("Path")[0].value+"'";-->
+  
+  <!--var PageURL=document.getElementsByName("Path").value;-->
+  //Enter Path: <input type="text" name="Path" value="Enter Path"><br>;
+  
+
+  // Query the API and print the results to the page.
+  function queryReports() {
+	
+	var PageURL=document.getElementsByName("Path")[0].value;
+    PageURL=PageURL.trim()
+	gapi.client.request({
+      path: '/v4/reports:batchGet',
+      root: 'https://analyticsreporting.googleapis.com',
+      method: 'POST',
+      body: {
+        reportRequests: [
+          
+		  //First Req
+		  {
+            viewId: VIEW_ID,
+            dateRanges: [
+              {
+                startDate: '7daysAgo',
+                endDate: 'today'
+              }
+            ],
+			dimensions:[
+			  {
+				"name": "ga:country"
+			  },
+			  {
+				"name":"ga:region"
+			  },
+			  {
+				"name":"ga:deviceCategory"
+			  },
+			  {
+				"name":"ga:pagePath"
+			  }
+			],
+            metrics: [
+              {
+                expression: 'ga:users'
+              },
+			  {
+                expression: 'ga:sessions',
+				alias:"sessions"
+              },
+			  {
+                expression: 'ga:pageviews'
+              },
+			  {
+                expression: 'ga:uniquePageviews'
+              },
+			  {
+                expression: 'ga:avgSessionDuration'
+              },
+			  {
+                expression: 'ga:sessionDuration'
+              },
+			  {
+                expression: 'ga:timeOnPage',
+				alias:"TimeOnPage"				
+              }
+            ],
+			 dimensionFilterClauses: 
+      [
+        {
+          filters: 
+          [
+            {
+              "dimensionName": "ga:pagePath",
+              "operator": "EXACT",
+              "expressions": [PageURL]
+            }
+          ]
+        }
+         ]
+          },
+		  //Second Req
+		  {
+            viewId: VIEW_ID,
+            dateRanges: [
+              {
+                startDate: '7daysAgo',
+                endDate: 'today'
+              }
+            ],
+			dimensions:[
+			  
+			  {
+				"name":"ga:pagePath"
+				
+			  }
+			],
+            metrics: [
+              {
+                expression: 'ga:users',
+				alias:"Unique Visitors"
+              },
+			  {
+                expression: 'ga:pageviews',
+				alias:"Total Views"
+              }
+            ],
+			 dimensionFilterClauses: 
+      [
+        {
+          filters: 
+          [
+            {
+              "dimensionName": "ga:pagePath",
+              "operator": "EXACT",
+              "expressions": [PageURL]
+            }
+          ]
+        }
+         ]
+          },
+		  //Third Req////////////////////////////////////////////////////
+		  {
+            viewId: VIEW_ID,
+            dateRanges: [
+              {
+                startDate: '7daysAgo',
+                endDate: 'today'
+              }
+            ],
+			dimensions:[
+			 
+			  {
+				"name":"ga:region"
+			  },
+			  {
+				"name":"ga:deviceCategory"
+			  }
+			],
+            metrics: [
+              {
+                expression: 'ga:users',
+				alias:"Users"
+              },
+			  {
+                expression: 'ga:uniquePageviews',
+				alias:"Sessions"
+              }
+            ],
+			 dimensionFilterClauses: 
+      [
+        {
+          filters: 
+          [
+            {
+              "dimensionName": "ga:pagePath",
+              "operator": "EXACT",
+              "expressions": [PageURL]
+            }
+          ]
+        }
+         ]
+          },
+		  ///////////////////////////////////////////////////////////
+		  //4th Req
+		  {
+            viewId: VIEW_ID,
+            dateRanges: [
+              {
+                startDate: '7daysAgo',
+                endDate: 'today'
+              }
+            ],
+			dimensions:[
+			  
+			  {
+				"name":"ga:deviceCategory"
+			  }
+			],
+            metrics: [
+              {
+                expression: 'ga:users',
+				alias:"Users"
+              },
+			  {
+                expression: 'ga:uniquePageviews',
+				alias:"Sessions"
+              },
+			  {
+                expression: 'ga:avgTimeOnPage',
+				alias:"Avg. Session Duration"
+              }
+			  
+            ],
+			 dimensionFilterClauses: 
+      [
+        {
+          filters: 
+          [
+            {
+              "dimensionName": "ga:pagePath",
+              "operator": "EXACT",
+              "expressions": [PageURL]
+            }
+          ]
+        }
+         ]
+          }
+		  
+        ]
+      }
+    }).then(displayResultsMainTBL, console.error.bind(console));
+  }
+//Main Table
+  function displayResultsMainTBL(response) {
+	
+	var output=[];
+    for( var i = 0, report; report = response.result.reports[i] ;++i )
+    {
+     output.push('<h3>Set of data : '+i+'</h3>');
+	 if (report.data.rows && report.data.rows.length) {
+        var table = ['<table border="1">'];
+		
+        // Put headers in table.
+         table.push('<tr><th>', report.columnHeader.dimensions.join('</th><th>'), '</th>');
+        //table.push('<th>Date range #</th>');
+
+         for (var j=0, header; header = report.columnHeader.metricHeader.metricHeaderEntries[j]; ++j) {
+           table.push('<th>', header.name, '</th>');
+         }
+
+        table.push('</tr>');
+
+        //Put cells in table.
+        for (var rowIndex=0, row; row = report.data.rows[rowIndex]; ++rowIndex) {
+          for(var dateRangeIndex=0, dateRange; dateRange = row.metrics[dateRangeIndex]; ++dateRangeIndex) {
+            // Put dimension values
+            table.push('<tr><td>', row.dimensions.join('</td><td>'), '</td>');
+            // Put metric values for the current date range
+            table.push('<td>', dateRange.values.join('</td><td>'), '</td></tr>');
+          }
+        }
+        table.push('</table>');
+		table.push('<div style="clear:both;"></div>')
+        output.push(table.join(''));
+		document.getElementById("myHeader").innerHTML=output.join('');
+	    //document.getElementsByTagName("table")[0].border='10px solid green';
+		
+      
+	  }
+	  //document.getElementsByTagName("body")[0].innerHTML=output.join('');
+	 
+    //document.getElementById('query-output').value='There was an error: ' + response.message;
+    //var formattedJson = JSON.parse(response.result);
+    //document.getElementById('query-output').value = formattedJson;
+  		
+  }
+ ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+ }
+ 
+</script>
+
+<!-- Load the JavaScript API client and Sign-in library. -->
+<script src="https://apis.google.com/js/client:platform.js"></script>
+
+</body>
+</html>
